@@ -1,6 +1,6 @@
 # MQTTPumpControllerV2
 Pump Controller project using Arduino and MQTT. 
-This Arduino project is to sense water level of an over head water tank and controlls a pump that fills it.
+This Arduino project is to sense water level of an over head water tank and controll a pump that fills it.
 
 The tank is fitted with float swiches at every quarter mark. These switches will go high once water level reaches it.
 These switches are connecte to the arduino which monitors the switch status and publish a corresponding message via MQTT to a 
