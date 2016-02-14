@@ -18,7 +18,7 @@
 #define QUARTER_DISP_PIN 3
 
 /*
-* Using SPI.
+* Using SPI for Ethernet shield
 * keep away from the following pins
 * MOSI 4
 * MISO 12 
@@ -32,7 +32,7 @@
 String levelMessage = "";
 
 //interrupt pin for full sense and switch off pump
-int buttonInt = 0; //AKA digital pin 2
+int interruptNo = 0; //AKA digital pin 2
 
 byte mac[] = { 0xDE, 0xAD, 0x09, 0xEF, 0xCE, 0xBF };
 byte server[] = { 192, 168, 0, 90 }; //local Mosquitto broker
@@ -94,13 +94,8 @@ void setup()
     
   connectToBroker();
   
-  if(ethClient.connected())
-    debugln("Ehternet Client is connected.");
-  else
-    debugln("Ethernet Client is disconnected.");
-    
-    
- attachInterrupt(buttonInt, interruptFalling, FALLING);
+  //attach fn interruptRising on rising voltage on interrupt.
+  attachInterrupt(interruptNo, interruptRising, RISING);
   
 }//end setup
   
@@ -138,19 +133,16 @@ void loop()
 
 void checkLevel()
 {
+  //initialize level to zero
   String levelMessage = "0";
-  int qtr, half, threeFourth, full = 0;
-  
-  qtr = analogRead(QUARTER_PIN);
-  half = analogRead(HALF_PIN);
-  threeFourth = analogRead(THREEFOURTH_PIN);
-  full = analogRead(FULL_PIN);
-  
+
+  //reset all display pins  
   digitalWrite(QUARTER_DISP_PIN, LOW);
   digitalWrite(HALF_DISP_PIN, LOW);
   digitalWrite(THREEFOURTH_DISP_PIN, LOW);
   digitalWrite(FULL_DISP_PIN, LOW);
   
+  //check all level pins and set level message for publish
   if (digitalRead(QUARTER_PIN))
   {
     levelMessage = "25";
@@ -182,23 +174,20 @@ void checkLevel()
     
   debug("CheckLevel: ");
   debugln(levelMessage);
-  publishMessage("/com/jmahendr/h1/utility/OHT", levelMessage);
   
-  //publishMessage("/com/jmahendr/h1/utility/pump/controller", counterStr);
-
+  //publish message
+  publishMessage("/com/jmahendr/h1/utility/OHT", levelMessage);
 }//checkLevel
 
 
 
-
-void interruptFalling()
+//This method will be invoked on RISING voltage of Interrupt0 (pin 2).
+void interruptRising()
 {
   debugln("InterruptFalling: ");
   digitalWrite(MOTOR_PIN, LOW);
   publishMessage("/com/jmahendr/h1/utility/pump/P1", "OFF");
 }//interrupt
-
-
 
 
 
@@ -214,6 +203,9 @@ void publishMessage(String topic, String message)
   
   client.publish(topicArray, messageArray);
 }//publishMessage
+
+
+
 
 
 void debug(String msg)
